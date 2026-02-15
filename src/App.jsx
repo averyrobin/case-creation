@@ -209,7 +209,7 @@ const ComplexityStep = ({ onSelect, tier }) => {
         }}>Learn More</button>
       </div>}
     </div>
-  </div>;
+  </div>
 };
 
 
