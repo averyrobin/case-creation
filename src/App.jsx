@@ -55,35 +55,61 @@ const COMPLEXITY_OPTIONS = [
   },
 ];
 
-const ComplexityStep = ({ onSelect }) => (
-  <div>
+const LockIconSmall=({size=14})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
+
+const ComplexityStep = ({ onSelect, tier }) => {
+  const isPro = tier === "pro";
+
+  return <div>
     <div style={{ textAlign: "center", marginBottom: 32 }}>
       <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#202124" }}>Start a New Onboarding</h1>
       <p style={{ margin: "8px 0 0", fontSize: 15, color: "#5f6368" }}>What type of client are you onboarding?</p>
     </div>
 
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-      {COMPLEXITY_OPTIONS.map(opt => (
-        <div key={opt.id} onClick={() => onSelect(opt.id)} style={{
-          background: "white", borderRadius: 12, border: "2px solid #e8eaed",
-          padding: "24px 20px", cursor: "pointer",
-          transition: "all 0.2s ease", position: "relative", overflow: "hidden",
-        }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = opt.color; e.currentTarget.style.boxShadow = `0 4px 20px ${opt.color}18`; e.currentTarget.style.transform = "translateY(-3px)"; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = "#e8eaed"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "none"; }}
+      {COMPLEXITY_OPTIONS.map(opt => {
+        const locked = !isPro && opt.id !== "simple";
+
+        return <div key={opt.id}
+          onClick={() => !locked && onSelect(opt.id)}
+          style={{
+            background: locked ? "#fafafa" : "white",
+            borderRadius: 12,
+            border: locked ? "2px solid #e8eaed" : "2px solid #e8eaed",
+            padding: "24px 20px",
+            cursor: locked ? "default" : "pointer",
+            transition: "all 0.2s ease",
+            position: "relative",
+            overflow: "hidden",
+            opacity: locked ? 0.65 : 1,
+          }}
+          onMouseEnter={e => { if (!locked) { e.currentTarget.style.borderColor = opt.color; e.currentTarget.style.boxShadow = `0 4px 20px ${opt.color}18`; e.currentTarget.style.transform = "translateY(-3px)"; } }}
+          onMouseLeave={e => { if (!locked) { e.currentTarget.style.borderColor = "#e8eaed"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "none"; } }}
         >
+          {/* Locked overlay badge */}
+          {locked && <div style={{
+            position: "absolute", top: 12, right: 12,
+            display: "flex", alignItems: "center", gap: 5,
+            padding: "4px 10px", borderRadius: 99,
+            background: "#f1f3f4", color: "#5f6368",
+            fontSize: 11, fontWeight: 600,
+          }}>
+            <LockIconSmall size={12} /> Pro
+          </div>}
+
           {/* Icon */}
           <div style={{
-            width: 52, height: 52, borderRadius: 12, background: opt.bg,
+            width: 52, height: 52, borderRadius: 12,
+            background: locked ? "#f1f3f4" : opt.bg,
             display: "flex", alignItems: "center", justifyContent: "center",
-            color: opt.color, marginBottom: 16,
+            color: locked ? "#9aa0a6" : opt.color, marginBottom: 16,
           }}>
             {opt.icon}
           </div>
 
-          <div style={{ fontSize: 18, fontWeight: 800, color: "#202124", marginBottom: 4 }}>{opt.title}</div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: opt.color, marginBottom: 12 }}>{opt.subtitle}</div>
-          <div style={{ fontSize: 13, color: "#5f6368", lineHeight: 1.55, marginBottom: 16 }}>{opt.description}</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: locked ? "#9aa0a6" : "#202124", marginBottom: 4 }}>{opt.title}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: locked ? "#bdc1c6" : opt.color, marginBottom: 12 }}>{opt.subtitle}</div>
+          <div style={{ fontSize: 13, color: locked ? "#bdc1c6" : "#5f6368", lineHeight: 1.55, marginBottom: 16 }}>{opt.description}</div>
 
           <div style={{ fontSize: 11.5, color: "#80868b", fontStyle: "italic", marginBottom: 16 }}>e.g., {opt.examples}</div>
 
@@ -99,16 +125,30 @@ const ComplexityStep = ({ onSelect }) => (
             }}>{s.label}</span>)}
           </div>
 
-          {/* Select arrow */}
+          {/* Select arrow or lock */}
           <div style={{
             position: "absolute", bottom: 20, right: 20,
-            width: 32, height: 32, borderRadius: "50%", background: opt.bg,
-            display: "flex", alignItems: "center", justifyContent: "center", color: opt.color,
+            width: 32, height: 32, borderRadius: "50%",
+            background: locked ? "#f1f3f4" : opt.bg,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: locked ? "#bdc1c6" : opt.color,
           }}>
-            <ArrowRight size={16} />
+            {locked ? <LockIconSmall size={14} /> : <ArrowRight size={16} />}
           </div>
-        </div>
-      ))}
+
+          {/* Upgrade banner for locked cards */}
+          {locked && <div style={{
+            marginTop: 16, padding: "10px 12px", borderRadius: 8,
+            background: "#e8f0fe", border: "1px solid #c5cfe8",
+            display: "flex", alignItems: "center", gap: 8,
+          }}>
+            <div style={{ fontSize: 12, color: "#1967d2", lineHeight: 1.4 }}>
+              <strong>Onboarding Pro</strong> required for {opt.title.toLowerCase()} structures with UBO identification, multi-entity case management, and tax return extraction.
+            </div>
+          </div>}
+        </div>;
+      })}
+    </div>
     </div>
 
     {/* Recent cases */}
@@ -122,10 +162,10 @@ const ComplexityStep = ({ onSelect }) => (
         { name: "Atlantic Shore Development Group", type: "Complex", status: "In Progress", date: "Feb 3, 2026", entities: 8, people: 12 },
         { name: "James Mitchell", type: "Simple", status: "Completed", date: "Jan 28, 2026", entities: 1, people: 1 },
         { name: "Bayshore Medical Partners LLC", type: "Standard", status: "On Hold", date: "Jan 22, 2026", entities: 1, people: 5 },
-      ].map((c, i) => <div key={i} style={{
+      ].filter(c => isPro || c.type === "Simple").map((c, i, arr) => <div key={i} style={{
         display: "grid", gridTemplateColumns: "1.5fr 0.5fr 0.5fr 0.5fr",
         alignItems: "center", padding: "10px 16px",
-        borderBottom: i < 3 ? "1px solid #f0f1f3" : "none", cursor: "pointer",
+        borderBottom: i < arr.length - 1 ? "1px solid #f0f1f3" : "none", cursor: "pointer",
       }}
         onMouseEnter={e => e.currentTarget.style.background = "#f8f9fa"}
         onMouseLeave={e => e.currentTarget.style.background = "transparent"}
@@ -147,19 +187,43 @@ const ComplexityStep = ({ onSelect }) => (
         }}>{c.status}</span></div>
         <div style={{ textAlign: "right", color: "#1967d2", fontSize: 12, fontWeight: 500 }}>Open →</div>
       </div>)}
+
+      {/* Essentials upgrade banner */}
+      {!isPro && <div style={{
+        padding: "16px 20px", background: "#f8f9fa", borderTop: "1px solid #e8eaed",
+        display: "flex", alignItems: "center", gap: 14,
+      }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: "#e8f0fe", display: "flex", alignItems: "center", justifyContent: "center", color: "#1967d2", flexShrink: 0 }}>
+          <LockIconSmall size={18} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#202124" }}>Need to onboard businesses with multiple owners?</div>
+          <div style={{ fontSize: 12, color: "#5f6368", marginTop: 2 }}>
+            Upgrade to <strong>Onboarding Pro</strong> for multi-entity case management, UBO identification, K-1 extraction, and complex ownership structure support.
+          </div>
+        </div>
+        <button style={{
+          padding: "8px 16px", borderRadius: 6, border: "none",
+          background: "#1967d2", color: "white", fontSize: 12, fontWeight: 600,
+          cursor: "pointer", whiteSpace: "nowrap",
+        }}>Learn More</button>
+      </div>}
     </div>
   </div>
 );
+};
 
 
 /* ══════════════════════════════════════════
    STEP 2: CHOOSE METHOD
    ══════════════════════════════════════════ */
 
-const MethodStep = ({ complexity, onSelect, onBack }) => {
+const MethodStep = ({ complexity, onSelect, onBack, tier }) => {
   const opt = COMPLEXITY_OPTIONS.find(o => o.id === complexity);
   const isSimple = complexity === "simple";
   const isComplex = complexity === "complex";
+  const isPro = tier === "pro";
+  const showUpload = !isSimple && isPro;
 
   return <div>
     <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, padding: 0, border: "none", background: "none", color: "#1967d2", fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 20 }}>
@@ -177,7 +241,7 @@ const MethodStep = ({ complexity, onSelect, onBack }) => {
       </p>
     </div>
 
-    <div style={{ display: "grid", gridTemplateColumns: isSimple ? "1fr 1fr" : "1fr 1fr 1fr", gap: 16, maxWidth: isSimple ? 640 : 900, margin: "0 auto" }}>
+    <div style={{ display: "grid", gridTemplateColumns: (isSimple || !showUpload) ? "1fr 1fr" : "1fr 1fr 1fr", gap: 16, maxWidth: (isSimple || !showUpload) ? 640 : 900, margin: "0 auto" }}>
       {/* Search option — always available */}
       <div onClick={() => onSelect("search")} style={{
         background: "white", borderRadius: 12, border: "2px solid #e8eaed", padding: "28px 20px",
@@ -202,8 +266,8 @@ const MethodStep = ({ complexity, onSelect, onBack }) => {
         </div>
       </div>
 
-      {/* Upload docs — available for standard & complex */}
-      {!isSimple && <div onClick={() => onSelect("upload")} style={{
+      {/* Upload docs — available for standard & complex with Pro */}
+      {showUpload && <div onClick={() => onSelect("upload")} style={{
         background: "white", borderRadius: 12, border: "2px solid #e8eaed", padding: "28px 20px",
         cursor: "pointer", transition: "all 0.2s ease",
       }}
@@ -250,7 +314,7 @@ const MethodStep = ({ complexity, onSelect, onBack }) => {
     </div>
 
     {/* Contextual help for complex */}
-    {isComplex && <div style={{
+    {isComplex && isPro && <div style={{
       marginTop: 24, padding: "16px 20px", borderRadius: 10,
       background: "#f3e8fd", border: "1px solid #ce93d8",
       display: "flex", alignItems: "flex-start", gap: 12, maxWidth: 900, margin: "24px auto 0",
@@ -824,6 +888,7 @@ export default function App() {
   const [view, setView] = useState("complexity"); // complexity | method | search | upload | blank | started
   const [complexity, setComplexity] = useState(null);
   const [startedEntity, setStartedEntity] = useState(null);
+  const [tier, setTier] = useState("pro"); // "pro" | "essentials"
 
   const handleComplexity = (c) => { setComplexity(c); setView("method"); };
   const handleMethod = (m) => setView(m);
@@ -831,6 +896,35 @@ export default function App() {
   const handleReset = () => { setView("complexity"); setComplexity(null); setStartedEntity(null); };
 
   return <div style={{ fontFamily: "'Salesforce Sans','SF Pro Text',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", background: "#f3f3f3", minHeight: "100vh", fontSize: 13, color: "#3c4043" }}>
+
+    {/* Tier toggle — floating pill */}
+    <div style={{
+      position: "fixed", bottom: 20, right: 20, zIndex: 999,
+      display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8,
+    }}>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 0,
+        background: "white", borderRadius: 99, border: "1px solid #dadce0",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.12)", overflow: "hidden",
+      }}>
+        <div onClick={() => { setTier("essentials"); handleReset(); }} style={{
+          padding: "10px 16px", fontSize: 12, fontWeight: 600, cursor: "pointer",
+          background: tier === "essentials" ? "#3c4043" : "white",
+          color: tier === "essentials" ? "white" : "#5f6368",
+          transition: "all 0.15s",
+        }}>Onboarding Essentials</div>
+        <div onClick={() => { setTier("pro"); handleReset(); }} style={{
+          padding: "10px 16px", fontSize: 12, fontWeight: 600, cursor: "pointer",
+          background: tier === "pro" ? "#1967d2" : "white",
+          color: tier === "pro" ? "white" : "#5f6368",
+          transition: "all 0.15s",
+        }}>Onboarding Pro</div>
+      </div>
+      <div style={{ fontSize: 10, color: "#9aa0a6", textAlign: "right" }}>
+        Demo toggle — switch FI tier
+      </div>
+    </div>
+
     {/* Top Nav */}
     <div style={{ background: "white", borderBottom: "1px solid #e0e0e0", padding: "0 16px", display: "flex", alignItems: "center", height: 44, gap: 24 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginRight: 8 }}>
@@ -838,7 +932,15 @@ export default function App() {
         <span style={{ fontWeight: 700, fontSize: 14, color: "#1967d2", letterSpacing: -0.2 }}>nCino</span>
       </div>
       {["Home","Leads","Opportunities","Relationships","Applications","Loans","Deposits","Onboarding"].map(item=><span key={item} style={{fontSize:12.5,color:item==="Onboarding"?"#1967d2":"#5f6368",fontWeight:item==="Onboarding"?600:400,cursor:"pointer",padding:"12px 0",borderBottom:item==="Onboarding"?"2px solid #1967d2":"2px solid transparent"}}>{item}</span>)}
-      <div style={{ marginLeft: "auto" }}><div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 4, background: "#f1f3f4", fontSize: 12, color: "#80868b" }}><SearchIcon size={14} /> Search...</div></div>
+      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+        {/* Tier badge in nav */}
+        <span style={{
+          fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 99,
+          background: tier === "pro" ? "#e8f0fe" : "#f1f3f4",
+          color: tier === "pro" ? "#1967d2" : "#5f6368",
+        }}>{tier === "pro" ? "Pro" : "Essentials"}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 4, background: "#f1f3f4", fontSize: 12, color: "#80868b" }}><SearchIcon size={14} /> Search...</div>
+      </div>
     </div>
 
     {/* Page Header */}
@@ -848,15 +950,19 @@ export default function App() {
         {view !== "complexity" && <><span style={{ color: "#bdc1c6", margin: "0 5px" }}>&gt;</span><span style={{ color: view === "method" ? "#3c4043" : "#1967d2", cursor: view !== "method" ? "pointer" : "default" }} onClick={() => complexity && setView("method")}>New Case</span></>}
         {["search","upload","blank"].includes(view) && <><span style={{ color: "#bdc1c6", margin: "0 5px" }}>&gt;</span><span style={{ color: "#3c4043" }}>{view === "search" ? "Search" : view === "upload" ? "Upload" : "Manual Entry"}</span></>}
       </div>
-      <div style={{ fontSize: 18, fontWeight: 700, color: "#202124" }}>
-        {view === "complexity" ? "Onboarding" : view === "started" ? "Case Created" : "New Onboarding Case"}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 18, fontWeight: 700, color: "#202124" }}>
+          {view === "complexity" ? "Onboarding" : view === "started" ? "Case Created" : "New Onboarding Case"}
+        </span>
+        {view === "complexity" && tier === "essentials" && <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 99, background: "#f1f3f4", color: "#5f6368" }}>Essentials</span>}
+        {view === "complexity" && tier === "pro" && <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 99, background: "#e8f0fe", color: "#1967d2" }}>Pro</span>}
       </div>
     </div>
 
     {/* Content */}
     <div style={{ maxWidth: view === "complexity" ? 960 : 860, margin: "0 auto", padding: "24px" }}>
-      {view === "complexity" && <ComplexityStep onSelect={handleComplexity} />}
-      {view === "method" && <MethodStep complexity={complexity} onSelect={handleMethod} onBack={() => setView("complexity")} />}
+      {view === "complexity" && <ComplexityStep onSelect={handleComplexity} tier={tier} />}
+      {view === "method" && <MethodStep complexity={complexity} onSelect={handleMethod} onBack={() => setView("complexity")} tier={tier} />}
       {view === "search" && <SearchFlow complexity={complexity} onBack={() => setView("method")} onStartCase={handleStartCase} />}
       {view === "upload" && <UploadFlow complexity={complexity} onBack={() => setView("method")} />}
       {view === "blank" && <BlankFlow complexity={complexity} onBack={() => setView("method")} />}
