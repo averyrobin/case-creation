@@ -210,7 +210,6 @@ const ComplexityStep = ({ onSelect, tier }) => {
       </div>}
     </div>
   </div>
-);
 };
 
 
