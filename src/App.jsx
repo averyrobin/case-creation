@@ -62,61 +62,42 @@ const LockIconSmall=({size=14})=><svg width={size} height={size} viewBox="0 0 24
 
 const ComplexityStep = ({ onSelect, tier }) => {
   const isPro = tier === "pro";
+  const visibleOptions = isPro ? COMPLEXITY_OPTIONS : COMPLEXITY_OPTIONS.filter(o => o.id === "simple");
 
   return <div>
     <div style={{ textAlign: "center", marginBottom: 32 }}>
       <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#202124" }}>Start a New Onboarding</h1>
-      <p style={{ margin: "8px 0 0", fontSize: 15, color: "#5f6368" }}>What type of client are you onboarding?</p>
+      <p style={{ margin: "8px 0 0", fontSize: 15, color: "#5f6368" }}>
+        {isPro ? "What type of client are you onboarding?" : "Create a new client onboarding."}
+      </p>
     </div>
 
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-      {COMPLEXITY_OPTIONS.map(opt => {
-        const locked = !isPro && opt.id !== "simple";
-
-        return <div key={opt.id}
-          onClick={() => !locked && onSelect(opt.id)}
+    <div style={{ display: "grid", gridTemplateColumns: isPro ? "1fr 1fr 1fr" : "1fr", gap: 16, maxWidth: isPro ? undefined : 420, margin: "0 auto" }}>
+      {visibleOptions.map(opt => (
+        <div key={opt.id}
+          onClick={() => onSelect(opt.id)}
           style={{
-            background: locked ? "#fafafa" : "white",
-            borderRadius: 12,
-            border: locked ? "2px solid #e8eaed" : "2px solid #e8eaed",
-            padding: "24px 20px",
-            cursor: locked ? "default" : "pointer",
-            transition: "all 0.2s ease",
-            position: "relative",
-            overflow: "hidden",
-            opacity: locked ? 0.65 : 1,
+            background: "white", borderRadius: 12, border: "2px solid #e8eaed",
+            padding: "24px 20px", cursor: "pointer",
+            transition: "all 0.2s ease", position: "relative", overflow: "hidden",
           }}
-          onMouseEnter={e => { if (!locked) { e.currentTarget.style.borderColor = opt.color; e.currentTarget.style.boxShadow = `0 4px 20px ${opt.color}18`; e.currentTarget.style.transform = "translateY(-3px)"; } }}
-          onMouseLeave={e => { if (!locked) { e.currentTarget.style.borderColor = "#e8eaed"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "none"; } }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = opt.color; e.currentTarget.style.boxShadow = `0 4px 20px ${opt.color}18`; e.currentTarget.style.transform = "translateY(-3px)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "#e8eaed"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "none"; }}
         >
-          {/* Locked overlay badge */}
-          {locked && <div style={{
-            position: "absolute", top: 12, right: 12,
-            display: "flex", alignItems: "center", gap: 5,
-            padding: "4px 10px", borderRadius: 99,
-            background: "#f1f3f4", color: "#5f6368",
-            fontSize: 11, fontWeight: 600,
-          }}>
-            <LockIconSmall size={12} /> Professional
-          </div>}
-
-          {/* Icon */}
           <div style={{
-            width: 52, height: 52, borderRadius: 12,
-            background: locked ? "#f1f3f4" : opt.bg,
+            width: 52, height: 52, borderRadius: 12, background: opt.bg,
             display: "flex", alignItems: "center", justifyContent: "center",
-            color: locked ? "#9aa0a6" : opt.color, marginBottom: 16,
+            color: opt.color, marginBottom: 16,
           }}>
             {opt.icon}
           </div>
 
-          <div style={{ fontSize: 18, fontWeight: 800, color: locked ? "#9aa0a6" : "#202124", marginBottom: 4 }}>{opt.title}</div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: locked ? "#bdc1c6" : opt.color, marginBottom: 12 }}>{opt.subtitle}</div>
-          <div style={{ fontSize: 13, color: locked ? "#bdc1c6" : "#5f6368", lineHeight: 1.55, marginBottom: 16 }}>{opt.description}</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: "#202124", marginBottom: 4 }}>{opt.title}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: opt.color, marginBottom: 12 }}>{opt.subtitle}</div>
+          <div style={{ fontSize: 13, color: "#5f6368", lineHeight: 1.55, marginBottom: 16 }}>{opt.description}</div>
 
           <div style={{ fontSize: 11.5, color: "#80868b", fontStyle: "italic", marginBottom: 16 }}>e.g., {opt.examples}</div>
 
-          {/* Stats */}
           <div style={{ display: "flex", gap: 8 }}>
             {[
               { label: opt.entities },
@@ -128,29 +109,16 @@ const ComplexityStep = ({ onSelect, tier }) => {
             }}>{s.label}</span>)}
           </div>
 
-          {/* Select arrow or lock */}
           <div style={{
             position: "absolute", bottom: 20, right: 20,
-            width: 32, height: 32, borderRadius: "50%",
-            background: locked ? "#f1f3f4" : opt.bg,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: locked ? "#bdc1c6" : opt.color,
+            width: 32, height: 32, borderRadius: "50%", background: opt.bg,
+            display: "flex", alignItems: "center", justifyContent: "center", color: opt.color,
           }}>
-            {locked ? <LockIconSmall size={14} /> : <ArrowRight size={16} />}
+            <ArrowRight size={16} />
           </div>
-
-          {/* Upgrade banner for locked cards */}
-          {locked && <div style={{
-            marginTop: 16, padding: "10px 12px", borderRadius: 8,
-            background: "#e8f0fe", border: "1px solid #c5cfe8",
-            display: "flex", alignItems: "center", gap: 8,
-          }}>
-            <div style={{ fontSize: 12, color: "#1967d2", lineHeight: 1.4 }}>
-              <strong>Onboarding Professional</strong> required for {opt.title.toLowerCase()} with UBO identification, case management, and compliance orchestration.
-            </div>
-          </div>}
-        </div>;
-      })}
+        </div>
+      ))}
+    </div>
     </div>
 
     {/* Recent cases */}
@@ -189,27 +157,6 @@ const ComplexityStep = ({ onSelect, tier }) => {
         }}>{c.status}</span></div>
         <div style={{ textAlign: "right", color: "#1967d2", fontSize: 12, fontWeight: 500 }}>Open →</div>
       </div>)}
-
-      {/* Essentials upgrade banner */}
-      {!isPro && <div style={{
-        padding: "16px 20px", background: "#f8f9fa", borderTop: "1px solid #e8eaed",
-        display: "flex", alignItems: "center", gap: 14,
-      }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: "#e8f0fe", display: "flex", alignItems: "center", justifyContent: "center", color: "#1967d2", flexShrink: 0 }}>
-          <LockIconSmall size={18} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#202124" }}>Need to onboard businesses with multiple owners?</div>
-          <div style={{ fontSize: 12, color: "#5f6368", marginTop: 2 }}>
-            Upgrade to <strong>Onboarding Professional</strong> for case management, UBO identification, K-1 extraction, compliance orchestration, and complex ownership structure support.
-          </div>
-        </div>
-        <button style={{
-          padding: "8px 16px", borderRadius: 6, border: "none",
-          background: "#1967d2", color: "white", fontSize: 12, fontWeight: 600,
-          cursor: "pointer", whiteSpace: "nowrap",
-        }}>Learn More</button>
-      </div>}
     </div>
   </div>;
 };
