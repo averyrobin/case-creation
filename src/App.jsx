@@ -149,7 +149,6 @@ const ComplexityStep = ({ onSelect, tier }) => {
         </div>;
       })}
     </div>
-    </div>
 
     {/* Recent cases */}
     <div style={{ marginTop: 32, background: "white", borderRadius: 10, border: "1px solid #e0e0e0", overflow: "hidden" }}>
