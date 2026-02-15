@@ -158,7 +158,7 @@ const ComplexityStep = ({ onSelect, tier }) => {
         <div style={{ textAlign: "right", color: "#1967d2", fontSize: 12, fontWeight: 500 }}>Open →</div>
       </div>)}
     </div>
-  </div>;
+
 };
 
 
