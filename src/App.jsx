@@ -25,33 +25,36 @@ const EntityBubble=({type,size=28})=>{const b=type==="business";return<div style
 const COMPLEXITY_OPTIONS = [
   {
     id: "simple",
-    title: "Simple",
-    subtitle: "Individual, Sole Prop, or Single-Member LLC",
-    description: "One person or one entity with a single owner. No complex ownership structure to untangle.",
+    title: "Individual or Simple Business",
+    subtitle: "Personal account, Sole Prop, or Single-Member LLC",
+    description: "One person or one entity with a single owner. No case structure needed — just create the entity, collect information, and verify.",
     examples: "Personal account, freelancer LLC, single-owner business",
     icon: <UserIcon size={28} color="#1967d2" />,
     color: "#1967d2", bg: "#e8f0fe",
     entities: "1 entity", people: "1 person", time: "~5 min",
+    noCase: true,
   },
   {
     id: "standard",
-    title: "Standard",
-    subtitle: "One business with multiple owners / UBOs",
-    description: "A single business entity (LLC, partnership, corporation) with multiple beneficial owners that need to be identified and verified.",
+    title: "Business with Owners",
+    subtitle: "One entity with multiple owners / UBOs",
+    description: "A single business entity with multiple beneficial owners that need to be identified and verified. Creates an onboarding case to manage the full KYC/KYB workflow.",
     examples: "Partnership, multi-member LLC, small corporation",
     icon: <UsersIcon size={28} />,
     color: "#e65100", bg: "#fff3e0",
     entities: "1 entity", people: "2–10 people", time: "~15 min",
+    noCase: false,
   },
   {
     id: "complex",
-    title: "Complex",
+    title: "Complex Structure",
     subtitle: "Holding companies, subsidiaries, multi-layer ownership",
-    description: "Multiple related business entities with layered ownership structures. Holding companies with operating subsidiaries, franchise groups, or investment vehicles.",
+    description: "Multiple related business entities with layered ownership structures. Creates an onboarding case with full entity management, UBO identification, and compliance orchestration.",
     examples: "Franchise group, PE portfolio, family office, multi-entity developer",
     icon: <LayersIcon size={28} />,
     color: "#7b1fa2", bg: "#f3e8fd",
     entities: "5–50+ entities", people: "5–20+ people", time: "~30 min",
+    noCase: false,
   },
 ];
 
@@ -94,7 +97,7 @@ const ComplexityStep = ({ onSelect, tier }) => {
             background: "#f1f3f4", color: "#5f6368",
             fontSize: 11, fontWeight: 600,
           }}>
-            <LockIconSmall size={12} /> Pro
+            <LockIconSmall size={12} /> Professional
           </div>}
 
           {/* Icon */}
@@ -143,7 +146,7 @@ const ComplexityStep = ({ onSelect, tier }) => {
             display: "flex", alignItems: "center", gap: 8,
           }}>
             <div style={{ fontSize: 12, color: "#1967d2", lineHeight: 1.4 }}>
-              <strong>Onboarding Pro</strong> required for {opt.title.toLowerCase()} structures with UBO identification, multi-entity case management, and tax return extraction.
+              <strong>Onboarding Professional</strong> required for {opt.title.toLowerCase()} with UBO identification, case management, and compliance orchestration.
             </div>
           </div>}
         </div>;
@@ -153,7 +156,7 @@ const ComplexityStep = ({ onSelect, tier }) => {
     {/* Recent cases */}
     <div style={{ marginTop: 32, background: "white", borderRadius: 10, border: "1px solid #e0e0e0", overflow: "hidden" }}>
       <div style={{ padding: "12px 16px", borderBottom: "1px solid #e8eaed", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ fontSize: 14, fontWeight: 700, color: "#202124" }}>Recent Onboarding Cases</span>
+        <span style={{ fontSize: 14, fontWeight: 700, color: "#202124" }}>{isPro ? "Recent Onboarding Cases" : "Recent Onboarding"}</span>
         <span style={{ fontSize: 12, color: "#1967d2", cursor: "pointer", fontWeight: 500 }}>View All →</span>
       </div>
       {[
@@ -198,7 +201,7 @@ const ComplexityStep = ({ onSelect, tier }) => {
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "#202124" }}>Need to onboard businesses with multiple owners?</div>
           <div style={{ fontSize: 12, color: "#5f6368", marginTop: 2 }}>
-            Upgrade to <strong>Onboarding Pro</strong> for multi-entity case management, UBO identification, K-1 extraction, and complex ownership structure support.
+            Upgrade to <strong>Onboarding Professional</strong> for case management, UBO identification, K-1 extraction, compliance orchestration, and complex ownership structure support.
           </div>
         </div>
         <button style={{
@@ -208,7 +211,7 @@ const ComplexityStep = ({ onSelect, tier }) => {
         }}>Learn More</button>
       </div>}
     </div>
-  </div>
+  </div>;
 };
 
 
@@ -862,20 +865,25 @@ const BlankFlow = ({ complexity, onBack }) => {
    CASE STARTED CONFIRMATION
    ══════════════════════════════════════════ */
 
-const CaseStarted = ({ entity, onReset }) => (
-  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "60px 24px", background: "white", borderRadius: 12, border: "1px solid #e0e0e0" }}>
+const CaseStarted = ({ entity, onReset, complexity }) => {
+  const isSimple = complexity === "simple";
+  return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "60px 24px", background: "white", borderRadius: 12, border: "1px solid #e0e0e0" }}>
     <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#e6f4ea", display: "flex", alignItems: "center", justifyContent: "center", color: "#1e8e3e" }}><CheckIcon size={28} /></div>
-    <div style={{ fontSize: 20, fontWeight: 700, color: "#202124" }}>Case Created</div>
-    <div style={{ fontSize: 14, color: "#5f6368", textAlign: "center", maxWidth: 400 }}>
-      Onboarding case has been initiated for <strong>{entity ? entity.name : "new entity"}</strong>.
+    <div style={{ fontSize: 20, fontWeight: 700, color: "#202124" }}>{isSimple ? "Onboarding Started" : "Case Created"}</div>
+    <div style={{ fontSize: 14, color: "#5f6368", textAlign: "center", maxWidth: 440 }}>
+      {isSimple
+        ? <>Onboarding has been initiated for <strong>{entity ? entity.name : "new client"}</strong>. You can now collect information, verify identity, and complete account opening.</>
+        : <>Onboarding case has been initiated for <strong>{entity ? entity.name : "new entity"}</strong>. You can now add related parties, collect documents, and manage the KYC/KYB workflow.</>}
       {entity?.existing && " Linked to existing nCino record."}
     </div>
     <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-      <button style={{ padding: "10px 20px", borderRadius: 8, border: "1px solid #dadce0", background: "white", color: "#3c4043", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>View Case →</button>
+      <button style={{ padding: "10px 20px", borderRadius: 8, border: "1px solid #dadce0", background: "white", color: "#3c4043", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
+        {isSimple ? "View Client →" : "View Case →"}
+      </button>
       <button onClick={onReset} style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "#1967d2", color: "white", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Start Another</button>
     </div>
-  </div>
-);
+  </div>;
+};
 
 
 /* ══════════════════════════════════════════
@@ -910,13 +918,13 @@ export default function App() {
           background: tier === "essentials" ? "#3c4043" : "white",
           color: tier === "essentials" ? "white" : "#5f6368",
           transition: "all 0.15s",
-        }}>Onboarding Essentials</div>
+        }}>Bundled Onboarding</div>
         <div onClick={() => { setTier("pro"); handleReset(); }} style={{
           padding: "10px 16px", fontSize: 12, fontWeight: 600, cursor: "pointer",
           background: tier === "pro" ? "#1967d2" : "white",
           color: tier === "pro" ? "white" : "#5f6368",
           transition: "all 0.15s",
-        }}>Onboarding Pro</div>
+        }}>Onboarding Professional</div>
       </div>
       <div style={{ fontSize: 10, color: "#9aa0a6", textAlign: "right" }}>
         Demo toggle — switch FI tier
@@ -936,7 +944,7 @@ export default function App() {
           fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 99,
           background: tier === "pro" ? "#e8f0fe" : "#f1f3f4",
           color: tier === "pro" ? "#1967d2" : "#5f6368",
-        }}>{tier === "pro" ? "Pro" : "Essentials"}</span>
+        }}>{tier === "pro" ? "Professional" : "Bundled"}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 4, background: "#f1f3f4", fontSize: 12, color: "#80868b" }}><SearchIcon size={14} /> Search...</div>
       </div>
     </div>
@@ -950,10 +958,10 @@ export default function App() {
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 18, fontWeight: 700, color: "#202124" }}>
-          {view === "complexity" ? "Onboarding" : view === "started" ? "Case Created" : "New Onboarding Case"}
+          {view === "complexity" ? "Onboarding" : view === "started" ? (complexity === "simple" ? "Onboarding Started" : "Case Created") : (complexity === "simple" ? "New Onboarding" : "New Onboarding Case")}
         </span>
-        {view === "complexity" && tier === "essentials" && <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 99, background: "#f1f3f4", color: "#5f6368" }}>Essentials</span>}
-        {view === "complexity" && tier === "pro" && <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 99, background: "#e8f0fe", color: "#1967d2" }}>Pro</span>}
+        {view === "complexity" && tier === "essentials" && <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 99, background: "#f1f3f4", color: "#5f6368" }}>Bundled</span>}
+        {view === "complexity" && tier === "pro" && <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 99, background: "#e8f0fe", color: "#1967d2" }}>Professional</span>}
       </div>
     </div>
 
@@ -964,7 +972,7 @@ export default function App() {
       {view === "search" && <SearchFlow complexity={complexity} onBack={() => setView("method")} onStartCase={handleStartCase} />}
       {view === "upload" && <UploadFlow complexity={complexity} onBack={() => setView("method")} />}
       {view === "blank" && <BlankFlow complexity={complexity} onBack={() => setView("method")} />}
-      {view === "started" && <CaseStarted entity={startedEntity} onReset={handleReset} />}
+      {view === "started" && <CaseStarted entity={startedEntity} onReset={handleReset} complexity={complexity} />}
     </div>
   </div>;
 }
