@@ -503,50 +503,297 @@ const UploadFlow = ({ complexity, onBack }) => {
 
 
 /* ══════════════════════════════════════════
-   BLANK / MANUAL FLOW
+   BLANK / MANUAL FLOW with inline dedup
    ══════════════════════════════════════════ */
 
-const BlankFlow = ({ complexity, onBack }) => (
-  <div>
+const DEDUP_MATCHES = {
+  name_only: [
+    { id: "m1", name: "Garden State Holdings LLC", ein: "27-4918523", address: "100 Main St, Red Bank, NJ", status: "No active case", confidence: 72, matchType: "Name similar", existing: true },
+    { id: "m2", name: "Garden State Subs Holdings LLC", ein: "27-4918600", address: "200 Broad St, Red Bank, NJ", status: "Active loan — Jun 2024", confidence: 58, matchType: "Name similar", existing: true },
+  ],
+  ein_exact: { id: "m3", name: "Garden State Holdings LLC", ein: "27-4918523", address: "100 Main St, Red Bank, NJ", status: "No active case · 2 prior relationships", confidence: 99, matchType: "EIN exact match", existing: true },
+  individual_name: [
+    { id: "m4", name: "Maria T. Cancro", ssn: "—", address: "14 Navesink Ave, Rumson, NJ", status: "Guarantor on GSH Subs I loan", confidence: 82, matchType: "Name + address match", existing: true },
+  ],
+  individual_ssn: { id: "m5", name: "Maria T. Cancro", ssn: "***-**-3277", address: "14 Navesink Ave, Rumson, NJ", status: "Guarantor on GSH Subs I loan · Existing KYC on file", confidence: 99, matchType: "SSN exact match", existing: true },
+};
+
+const MatchPanel = ({ matches, type, onLink, onDismiss, resolved }) => {
+  if (resolved) return <div style={{
+    display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginTop: 8,
+    borderRadius: 8, background: resolved === "linked" ? "#e6f4ea" : "#f8f9fa",
+    border: `1px solid ${resolved === "linked" ? "#34a853" : "#e8eaed"}`,
+  }}>
+    {resolved === "linked" ? <><div style={{ width: 20, height: 20, borderRadius: "50%", background: "#34a853", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}><LinkIcon size={10} /></div><span style={{ fontSize: 12, fontWeight: 600, color: "#1e8e3e" }}>Linked to existing record</span></> 
+    : <><div style={{ width: 20, height: 20, borderRadius: "50%", background: "#e8eaed", display: "flex", alignItems: "center", justifyContent: "center", color: "#5f6368" }}><PlusIcon size={10} /></div><span style={{ fontSize: 12, fontWeight: 600, color: "#5f6368" }}>Creating as new record</span></>}
+  </div>;
+
+  const isExact = type === "exact";
+  const items = Array.isArray(matches) ? matches : [matches];
+
+  return <div style={{
+    marginTop: 8, borderRadius: 8, overflow: "hidden",
+    border: isExact ? "2px solid #34a853" : "1px solid #f9ab00",
+    background: isExact ? "#e8f5e9" : "#fffde7",
+  }}>
+    <div style={{
+      display: "flex", alignItems: "center", gap: 8, padding: "10px 14px",
+      borderBottom: `1px solid ${isExact ? "#34a85333" : "#f9ab0033"}`,
+    }}>
+      {isExact
+        ? <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#34a853", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}><CheckIcon size={10} /></div>
+        : <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#f9ab00", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}><AlertIcon size={10} /></div>
+      }
+      <span style={{ fontSize: 12, fontWeight: 700, color: isExact ? "#1e8e3e" : "#b06000" }}>
+        {isExact ? "Exact match found in nCino" : `${items.length} possible match${items.length > 1 ? "es" : ""} found`}
+      </span>
+    </div>
+    {items.map((m, i) => <div key={m.id} style={{
+      padding: "12px 14px", borderBottom: i < items.length - 1 ? `1px solid ${isExact ? "#34a85322" : "#f9ab0022"}` : "none",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <EntityBubble type={m.ssn ? "individual" : "business"} size={24} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#202124" }}>{m.name}</div>
+            <div style={{ fontSize: 11, color: "#5f6368" }}>
+              {m.ein ? `EIN: ${m.ein}` : m.ssn ? `SSN: ${m.ssn}` : ""} · {m.address}
+            </div>
+          </div>
+        </div>
+        <span style={{
+          fontSize: 10.5, fontWeight: 600, padding: "2px 8px", borderRadius: 99,
+          background: m.confidence >= 90 ? "#e6f4ea" : m.confidence >= 70 ? "#fef7e0" : "#f1f3f4",
+          color: m.confidence >= 90 ? "#1e8e3e" : m.confidence >= 70 ? "#b06000" : "#5f6368",
+        }}>{m.confidence}% · {m.matchType}</span>
+      </div>
+      <div style={{ fontSize: 11, color: "#5f6368", marginBottom: 8 }}>{m.status}</div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button onClick={() => onLink(m)} style={{
+          display: "flex", alignItems: "center", gap: 4, padding: "6px 12px", borderRadius: 6,
+          border: "none", background: "#1967d2", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer",
+        }}><LinkIcon size={10} /> This is them — Link</button>
+        <button onClick={onDismiss} style={{
+          display: "flex", alignItems: "center", gap: 4, padding: "6px 12px", borderRadius: 6,
+          border: "1px solid #dadce0", background: "white", color: "#5f6368", fontSize: 12, fontWeight: 500, cursor: "pointer",
+        }}>Not a match — Continue as new</button>
+      </div>
+    </div>)}
+  </div>;
+};
+
+const BlankFlow = ({ complexity, onBack }) => {
+  const isSimple = complexity === "simple";
+  const [formState, setFormState] = useState({ name: "", ein: "", ssn: "", dob: "", address: "", csz: "", entityType: "", state: "" });
+  const [nameTyping, setNameTyping] = useState(false);
+  const [nameMatches, setNameMatches] = useState(null);
+  const [einMatch, setEinMatch] = useState(null);
+  const [nameResolved, setNameResolved] = useState(null);
+  const [einResolved, setEinResolved] = useState(null);
+  const [searching, setSearching] = useState(false);
+
+  const allResolved = (!nameMatches || nameResolved) && (!einMatch || einResolved);
+  const hasMatches = nameMatches || einMatch;
+
+  const handleNameChange = (val) => {
+    setFormState(p => ({ ...p, name: val }));
+    setNameResolved(null);
+    setNameMatches(null);
+    if (val.length >= 6) {
+      setSearching(true);
+      setTimeout(() => {
+        setSearching(false);
+        if (isSimple) {
+          setNameMatches(DEDUP_MATCHES.individual_name);
+        } else {
+          setNameMatches(DEDUP_MATCHES.name_only);
+        }
+      }, 800);
+    }
+  };
+
+  const handleEinChange = (val) => {
+    setFormState(p => ({ ...p, ein: val, ssn: val }));
+    setEinResolved(null);
+    setEinMatch(null);
+    if (val.length >= 5) {
+      setSearching(true);
+      setTimeout(() => {
+        setSearching(false);
+        if (isSimple) {
+          setEinMatch(DEDUP_MATCHES.individual_ssn);
+        } else {
+          setEinMatch(DEDUP_MATCHES.ein_exact);
+        }
+      }, 600);
+    }
+  };
+
+  return <div>
     <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, padding: 0, border: "none", background: "none", color: "#1967d2", fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 20 }}>
       <ArrowLeft size={14} /> Back to creation method
     </button>
     <div style={{ background: "white", borderRadius: 10, border: "1px solid #e0e0e0", padding: "32px 24px" }}>
       <h2 style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 700, color: "#202124" }}>
-        {complexity === "simple" ? "New Client Information" : "Create Case — Manual Entry"}
+        {isSimple ? "New Client Information" : "Create Case — Manual Entry"}
       </h2>
       <p style={{ margin: "0 0 24px", fontSize: 13, color: "#5f6368" }}>
-        {complexity === "simple"
-          ? "Enter the client's information to start the onboarding process."
-          : "You'll create the primary entity first, then add related parties and ownership information one at a time."}
+        {isSimple
+          ? "Enter the client's information below. We'll check for existing records as you type."
+          : "Start with the primary entity. We'll search for existing records in real time as you enter information."}
       </p>
 
-      {/* Mock form fields */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 24px" }}>
-        {(complexity === "simple"
-          ? [{ l: "Client Type", ph: "Individual / Sole Prop / LLC" }, { l: "Full Legal Name", ph: "Enter name" }, { l: "SSN or EIN", ph: "Enter tax ID" }, { l: "Date of Birth", ph: "MM/DD/YYYY" }, { l: "Address", ph: "Street address" }, { l: "City, State, ZIP", ph: "City, ST ZIP" }]
-          : [{ l: "Primary Entity Name", ph: "Legal business name" }, { l: "Entity Type", ph: "LLC / Partnership / Corp" }, { l: "EIN", ph: "XX-XXXXXXX" }, { l: "State of Formation", ph: "Select state" }, { l: "Registered Address", ph: "Street address" }, { l: "City, State, ZIP", ph: "City, ST ZIP" }]
-        ).map((f, i) => <div key={i}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: "#5f6368", marginBottom: 4 }}>{f.l}</div>
-          <div style={{
-            padding: "10px 12px", borderRadius: 6, border: "1px solid #dadce0",
-            fontSize: 13, color: "#bdc1c6", background: "#fafafa",
-          }}>{f.ph}</div>
-        </div>)}
+      {/* Live dedup indicator */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 20,
+        borderRadius: 8, background: "#f8f9fa", border: "1px solid #e8eaed",
+      }}>
+        <SearchIcon size={14} />
+        <span style={{ fontSize: 12, color: "#5f6368" }}>
+          <strong>Real-time dedup active</strong> — we'll check nCino for existing records as you enter name and tax ID
+        </span>
+        {searching && <SpinnerIcon size={14} />}
       </div>
 
+      {/* Form */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {/* Row 1: Name (full width with dedup) */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "#5f6368", marginBottom: 4 }}>{isSimple ? "Full Legal Name" : "Primary Entity Name"} *</div>
+          <div style={{ position: "relative" }}>
+            <input
+              value={formState.name}
+              onChange={e => handleNameChange(e.target.value)}
+              placeholder={isSimple ? "e.g., Maria Cancro" : "e.g., Garden State Holdings LLC"}
+              style={{
+                width: "100%", padding: "10px 12px", borderRadius: 6, fontSize: 14,
+                border: nameMatches && !nameResolved ? "2px solid #f9ab00" : "1px solid #dadce0",
+                outline: "none", boxSizing: "border-box",
+              }}
+            />
+            {searching && formState.name.length >= 6 && !nameMatches && <div style={{ position: "absolute", right: 12, top: 11 }}><SpinnerIcon size={16} /></div>}
+          </div>
+          {nameMatches && <MatchPanel
+            matches={nameMatches}
+            type="possible"
+            onLink={(m) => setNameResolved("linked")}
+            onDismiss={() => setNameResolved("new")}
+            resolved={nameResolved}
+          />}
+        </div>
+
+        {/* Row 2: Tax ID + one more field */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#5f6368", marginBottom: 4 }}>{isSimple ? "SSN or EIN" : "EIN"} *</div>
+            <input
+              value={isSimple ? formState.ssn : formState.ein}
+              onChange={e => handleEinChange(e.target.value)}
+              placeholder={isSimple ? "e.g., ***-**-3277" : "e.g., 27-4918523"}
+              style={{
+                width: "100%", padding: "10px 12px", borderRadius: 6, fontSize: 14,
+                border: einMatch && !einResolved ? "2px solid #34a853" : "1px solid #dadce0",
+                outline: "none", boxSizing: "border-box",
+              }}
+            />
+            {einMatch && <MatchPanel
+              matches={einMatch}
+              type="exact"
+              onLink={(m) => setEinResolved("linked")}
+              onDismiss={() => setEinResolved("new")}
+              resolved={einResolved}
+            />}
+          </div>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#5f6368", marginBottom: 4 }}>{isSimple ? "Date of Birth" : "Entity Type"}</div>
+            <select style={{
+              width: "100%", padding: "10px 12px", borderRadius: 6, fontSize: 14,
+              border: "1px solid #dadce0", outline: "none", boxSizing: "border-box",
+              color: "#bdc1c6", background: "white",
+            }}>
+              {isSimple
+                ? <option>MM/DD/YYYY</option>
+                : <><option>Select type...</option><option>LLC</option><option>Partnership</option><option>Corporation</option><option>Trust</option></>
+              }
+            </select>
+          </div>
+        </div>
+
+        {/* Row 3 */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#5f6368", marginBottom: 4 }}>{isSimple ? "Address" : "Registered Address"}</div>
+            <input placeholder="Street address" style={{
+              width: "100%", padding: "10px 12px", borderRadius: 6, fontSize: 14,
+              border: "1px solid #dadce0", outline: "none", boxSizing: "border-box",
+            }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#5f6368", marginBottom: 4 }}>City, State, ZIP</div>
+            <input placeholder="City, ST ZIP" style={{
+              width: "100%", padding: "10px 12px", borderRadius: 6, fontSize: 14,
+              border: "1px solid #dadce0", outline: "none", boxSizing: "border-box",
+            }} />
+          </div>
+        </div>
+
+        {!isSimple && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#5f6368", marginBottom: 4 }}>State of Formation</div>
+            <select style={{
+              width: "100%", padding: "10px 12px", borderRadius: 6, fontSize: 14,
+              border: "1px solid #dadce0", outline: "none", boxSizing: "border-box",
+              color: "#bdc1c6", background: "white",
+            }}><option>Select state...</option></select>
+          </div>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#5f6368", marginBottom: 4 }}>Date of Formation</div>
+            <input placeholder="MM/DD/YYYY" style={{
+              width: "100%", padding: "10px 12px", borderRadius: 6, fontSize: 14,
+              border: "1px solid #dadce0", outline: "none", boxSizing: "border-box",
+            }} />
+          </div>
+        </div>}
+      </div>
+
+      {/* Match resolution gate */}
+      {hasMatches && !allResolved && <div style={{
+        display: "flex", alignItems: "center", gap: 8, padding: "12px 14px", marginTop: 20,
+        borderRadius: 8, background: "#fef7e0", border: "1px solid #f9ab00",
+      }}>
+        <AlertIcon size={14} />
+        <span style={{ fontSize: 12, fontWeight: 600, color: "#b06000" }}>
+          Resolve all potential matches above before continuing
+        </span>
+      </div>}
+
+      {/* Summary of resolutions */}
+      {hasMatches && allResolved && <div style={{
+        display: "flex", alignItems: "center", gap: 8, padding: "12px 14px", marginTop: 20,
+        borderRadius: 8, background: "#e6f4ea", border: "1px solid #34a853",
+      }}>
+        <CheckIcon size={14} />
+        <span style={{ fontSize: 12, fontWeight: 600, color: "#1e8e3e" }}>
+          All matches resolved — ready to continue
+        </span>
+      </div>}
+
+      {/* Submit */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>
-        <button style={{
+        <button disabled={hasMatches && !allResolved} style={{
           display: "flex", alignItems: "center", gap: 6,
           padding: "10px 24px", borderRadius: 8, border: "none",
-          background: "#1967d2", color: "white", fontSize: 14, fontWeight: 600, cursor: "pointer",
+          background: (hasMatches && !allResolved) ? "#dadce0" : "#1967d2",
+          color: (hasMatches && !allResolved) ? "#9aa0a6" : "white",
+          fontSize: 14, fontWeight: 600,
+          cursor: (hasMatches && !allResolved) ? "default" : "pointer",
         }}>
-          {complexity === "simple" ? "Check for Existing & Continue" : "Save & Add Related Parties"} <ArrowRight size={14} />
+          {isSimple ? "Create Client & Start Onboarding" : "Save & Add Related Parties"} <ArrowRight size={14} />
         </button>
       </div>
     </div>
-  </div>
-);
+  </div>;
+};
 
 
 /* ══════════════════════════════════════════
