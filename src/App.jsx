@@ -265,8 +265,8 @@ const MethodStep = ({ complexity, onSelect, onBack }) => {
         </div>
       </div>
     </div>}
-  </div>
-);
+  </div>;
+};
 
 
 /* ══════════════════════════════════════════
